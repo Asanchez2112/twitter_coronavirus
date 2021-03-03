@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input_path',required=True)
 parser.add_argument('--output_folder',default='outputs')
 args = parser.parse_args()
-
+print("ki")
 # imports
 import os
 import zipfile
@@ -37,6 +37,7 @@ hashtags = [
 
 # initialize counters
 counter_lang = defaultdict(lambda: Counter())
+counter_country = defaultdict(lambda: Counter())
 
 # open the zipfile
 with zipfile.ZipFile(args.input_path) as archive:
@@ -60,9 +61,16 @@ with zipfile.ZipFile(args.input_path) as archive:
                 # search hashtags
                 for hashtag in hashtags:
                     lang = tweet['lang']
+                    if tweet['place'] != None and tweet['place']['country_code'] != None:
+                        cont = tweet['place']['country_code']
+                    else:
+                        cont = 'Not a country'
                     if hashtag in text:
                         counter_lang[hashtag][lang] += 1
+                        counter_country[hashtag][cont] += 1
                     counter_lang['_all'][lang] += 1
+                    counter_country['_all'][cont] += 1
+                        
 
 # open the outputfile
 try:
@@ -72,7 +80,12 @@ except FileExistsError:
 output_path_base = os.path.join(args.output_folder,os.path.basename(args.input_path))
 
 output_path_lang = output_path_base+'.lang'
+output_path_country = output_path_base+'.country'
+
 print('saving',output_path_lang)
 with open(output_path_lang,'w') as f:
     f.write(json.dumps(counter_lang))
 
+print('saving',output_path_country)
+with open(output_path_country,'w') as f:
+    f.write(json.dumps(counter_country))
